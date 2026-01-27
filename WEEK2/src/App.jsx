@@ -57,6 +57,9 @@ function App() {
       const { token, expired } = response.data;
       document.cookie = `hexToken=${token};expires=${new Date(expired).toUTCString()};path=/`;
       axios.defaults.headers.common["Authorization"] = token;
+
+      console.log("check token =", token);
+
       getProducts();
       setIsAuth(true);
     } catch (error) {
@@ -73,11 +76,19 @@ function App() {
         .find((row) => row.startsWith("hexToken="))
         ?.split("=")[1];
       axios.defaults.headers.common["Authorization"] = token;
+
+      // const response = await axios.post(
+      //   `${API_BASE}/api/user/check`,
+      //   {},
+      //   { headers: { Authorization: token } },
+      // );
+
       const response = await axios.post(
-        `${API_BASE}/api/user/check`,
+        "https://ec-course-api.hexschool.io/v2/api/user/check",
         {},
         { headers: { Authorization: token } },
       );
+
       console.log(response.data);
     } catch (error) {
       console.log(error.response?.data.message);
