@@ -33,7 +33,8 @@ function App() {
       const response = await axios.get(
         `${API_BASE}/api/${API_PATH}/admin/products`,
       );
-      headers: { Authorization: token },
+      console.log("UR:" + `${API_BASE}/api/${API_PATH}/admin/products`, {
+        headers: { Authorization: token },
       });
       console.log("response:" + response);
       setProducts(response.data.products);
