@@ -1,0 +1,59 @@
+name: Deploy weeks to GitHub Pages
+
+on:
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build existing weeks (WEEK2~WEEK8)
+        shell: bash
+        run: |
+          set -e
+          mkdir -p publish
+
+          for w in WEEK2 WEEK3 WEEK4 WEEK5 WEEK6 WEEK7 WEEK8; do
+            if [ -f "$w/package.json" ]; then
+              echo "=== Building $w ==="
+              (cd "$w" && npm ci && npm run build)
+              mkdir -p "publish/$w"
+              cp -r "$w/dist/"* "publish/$w/"
+            else
+              echo "=== Skip $w (not found) ==="
+            fi
+          done
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: publish
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
