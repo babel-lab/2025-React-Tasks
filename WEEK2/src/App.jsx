@@ -33,9 +33,13 @@ function App() {
       const response = await axios.get(
         `${API_BASE}/api/${API_PATH}/admin/products`,
       );
-      console.log("UR:" + `${API_BASE}/api/${API_PATH}/admin/products`, {
-        headers: { Authorization: token },
-      });
+      // const response = await axios.get(
+      //   `${API_BASE}/api/${API_PATH}/admin/products`,
+      //   { headers: { Authorization: token } },
+      // );
+      // console.log("UR:" + `${API_BASE}/api/${API_PATH}/admin/products`, {
+      //   headers: { Authorization: token },
+      // });
       console.log("response:" + response);
       setProducts(response.data.products);
     } catch (error) {
@@ -48,20 +52,19 @@ function App() {
     {
       JSON.stringify("API_BASE:" + API_BASE);
     }
+    e.preventDefault();
     try {
-      e.preventDefault();
-
       const response = await axios.post(`${API_BASE}/admin/signin`, formData);
       console.log(response.data);
 
       const { token, expired } = response.data;
       document.cookie = `hexToken=${token};expires=${new Date(expired).toUTCString()};path=/`;
-      axios.defaults.headers.common["Authorization"] = token;
-
+      //axios.defaults.headers.common["Authorization"] = token;
+      axios.defaults.headers.common.Authorization = token;
       console.log("check token =", token);
 
-      getProducts();
       setIsAuth(true);
+      getProducts();
       console.log("cookie now =", document.cookie);
     } catch (error) {
       setIsAuth(false);
@@ -74,6 +77,7 @@ function App() {
   const getToken = () =>
     document.cookie
       .split(";")
+      .map((row) => row.trim())
       .find((row) => row.startsWith("hexToken="))
       ?.split("=")[1];
 
