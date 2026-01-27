@@ -70,11 +70,20 @@ function App() {
   };
 
   //登入確認
-  const checkLogin = async () => {
-    const token = document.cookie
+
+  const getToken = () =>
+    document.cookie
       .split(";")
       .find((row) => row.startsWith("hexToken="))
       ?.split("=")[1];
+
+  const checkLogin = async () => {
+    // const token = document.cookie
+    //   .split(";")
+    //   .find((row) => row.startsWith("hexToken="))
+    //   ?.split("=")[1];
+
+    const token = getToken();
 
     console.log("[check] token =", token);
     if (!token) {
@@ -82,7 +91,7 @@ function App() {
       return;
     }
     try {
-      axios.defaults.headers.common["Authorization"] = token;
+      //axios.defaults.headers.common["Authorization"] = token;
 
       // const response = await axios.post(
       //   `${API_BASE}/api/user/check`,
