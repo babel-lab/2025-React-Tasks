@@ -90,8 +90,10 @@ function App() {
       );
 
       console.log(response.data);
+      console.log("登入確認成功");
     } catch (error) {
       console.log(error.response?.data.message);
+      console.log("登入確認錯誤");
     }
   };
 
