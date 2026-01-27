@@ -62,6 +62,7 @@ function App() {
 
       getProducts();
       setIsAuth(true);
+      console.log("cookie now =", document.cookie);
     } catch (error) {
       setIsAuth(false);
       console.log(error.response);
@@ -70,11 +71,17 @@ function App() {
 
   //登入確認
   const checkLogin = async () => {
+    const token = document.cookie
+      .split(";")
+      .find((row) => row.startsWith("hexToken="))
+      ?.split("=")[1];
+
+    console.log("[check] token =", token);
+    if (!token) {
+      console.log("[check] 沒拿到 token");
+      return;
+    }
     try {
-      const token = document.cookie
-        .split(";")
-        .find((row) => row.startsWith("hexToken="))
-        ?.split("=")[1];
       axios.defaults.headers.common["Authorization"] = token;
 
       // const response = await axios.post(
@@ -90,9 +97,17 @@ function App() {
       );
 
       console.log(response.data);
+      console.log("[check] ok", response.data);
       console.log("登入確認成功");
+      //console.log("check token =", token);
     } catch (error) {
       console.log(error.response?.data.message);
+      console.log("[check] axios err =", error);
+      console.log("[check] message =", error?.message);
+      console.log("[check] code =", error?.code);
+      console.log("[check] response =", error?.response);
+      console.log("[check] status =", error?.response?.status);
+      console.log("[check] data =", error?.response?.data);
       console.log("登入確認錯誤");
     }
   };
