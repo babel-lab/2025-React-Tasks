@@ -55,7 +55,7 @@ function App() {
       console.log(response.data);
 
       const { token, expired } = response.data;
-      document.cookie = `hexToken=${token};expires=${new Date(expired)};path=/`;
+      document.cookie = `hexToken=${token};expires=${new Date(expired).toUTCString()};path=/`;
       axios.defaults.headers.common["Authorization"] = token;
       getProducts();
       setIsAuth(true);
@@ -73,7 +73,11 @@ function App() {
         .find((row) => row.startsWith("hexToken="))
         ?.split("=")[1];
       axios.defaults.headers.common["Authorization"] = token;
-      const response = await axios.post(`${API_BASE}/api/user/check`);
+      const response = await axios.post(
+        `${API_BASE}/api/user/check`,
+        {},
+        { headers: { Authorization: token } },
+      );
       console.log(response.data);
     } catch (error) {
       console.log(error.response?.data.message);
