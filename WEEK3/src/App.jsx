@@ -20,7 +20,7 @@ const INITIAL_TEMPLATE_DATA = {
   content: "",
   is_enabled: false,
   imageUrl: "",
-  imagesUrl: [],
+  imagesUrl: [], //陣列要特殊處理
 };
 
 function App() {
@@ -50,11 +50,57 @@ function App() {
   const handleModalInputChange = (e) => {
     const { name, value, checked, type } = e.target;
 
-    setTemplateProductData((preData) => ({
+    setTemplateProduct((preData) => ({
       ...preData,
       [name]: type === "checkbox" ? checked : value,
     }));
   };
+
+
+  const handleModalImageChange = (index, value) => {
+    //設定新的值
+    setTemplateProduct((pre)=>{
+      const newImage = [...pre.imagesUrl];
+      newImage[index] = value;
+
+//UX優化: 填寫最後一個空輸入框時, 自動新增空白輸入框
+if(value !=="" && index === newImage.length -1 && newImage.length < 5){newImage.push('');}
+
+//UX優化: 清空輸入框時, 移除最後的空白輸入框
+if(value === "" && newImage.length > 1 && newImage[newImage.length-1] === ""){newImage.pop()}
+
+      return {
+        ...pre,
+        imagesUrl: newImage
+      } 
+    } )
+  }
+
+  //新增最後一筆產品圖片
+const handleAddImage = () => {
+  setTemplateProduct((pre) => {
+    const newImage = [...pre.imagesUrl];
+    newImage.push("");
+    return {
+      ...pre,
+      imagesUrl: newImage,
+    };  
+  });
+}
+  //移除最後一筆產品圖片
+  const handleRemoveImage = () => { 
+    setTemplateProduct((pre) => {
+      const newImage = [...pre.imagesUrl];
+      newImage.pop("");
+      return {
+        ...pre,
+        imagesUrl: newImage,
+      };  
+    });  
+  }
+
+
+
 
   //取產品列表
   const getProducts = async (token) => {
@@ -69,6 +115,51 @@ function App() {
     }
   };
 
+  //更新產品
+  //建立URL取得變數
+  const updateProduct = async (id) => {
+    let url = `${API_BASE}/api/${API_PATH}/admin/product`;
+    let method = 'post'
+    if(modalType==='edit'){
+      url = `${API_BASE}/api/${API_PATH}/admin/product/${id}`
+      method = 'put'
+    }
+  
+  const productData={
+    data:{
+      ...templateProduct,
+      origin_price: Number(templateProduct.origin_price),
+      price: Number(templateProduct.price),
+      is_enabled: templateProduct.is_enabled ? 1 : 0,
+      imagesUrl: [...templateProduct.imagesUrl.filter((url)=>url!=="")],
+    }
+  }
+  try{
+      const response = await axios[method](url,productData);
+      console.log(response.data);
+      getProducts();
+      closeModal();
+      console.log('close modal');
+      
+    }catch(error){
+      console.log(error.response);
+    }
+  }
+
+
+  //刪除產品
+  const delProduct = async(id) => {
+try{
+  console.log('id:'+id);
+  const response = await axios.delete(`${API_BASE}/api/${API_PATH}/admin/product/${id}`);
+  console.log(response.data);
+  //如果成功了, 就要更新產品資訊
+  getProducts();
+  closeModal();
+}catch(error){
+  console.log(error.response);  
+  }
+}
   //登入
   const onSubmit = async (e) => {
     {
@@ -144,9 +235,20 @@ function App() {
     });
   }, []);
 
+  // Modal 關閉時移除焦點
+  /*
+  document
+    .querySelector("#productModal")
+    .addEventListener("hide.bs.modal", () => {
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+    });
+*/
   //已經選到DOM元素了
   //開啟
   const openModal = (type, product) => {
+
     console.log(product);
     setModalType(type);
     //把產品設定進去MODAL
@@ -216,22 +318,41 @@ function App() {
             </button>
           </div>
 
-          <table className="table">
+          <table className="table align-middle">
             <thead>
               <tr>
+              <th scope="col">預覽</th>
                 <th scope="col">分類</th>
                 <th scope="col">產品名稱</th>
+                <th width="100">單位</th>
                 <th scope="col">原價</th>
                 <th scope="col">售價</th>
                 <th scope="col">是否啟用</th>
                 <th scope="col">編輯</th>
+                <th>其他副圖</th> {/* 新增這一欄 */}
               </tr>
             </thead>
             <tbody>
               {products.map((product) => (
                 <tr key={product.id}>
+{/* 新增主圖預覽欄位 */}
+<td>
+        <img 
+          src={product.imageUrl} 
+          alt={product.title} 
+          style={{ width: '100px', height: '100px', objectFit: 'cover' }} 
+          className="img-thumbnail" 
+          style={{ 
+    width: '60px',       // 從 100px 調降
+    height: '60px',      // 保持 1:1 比例
+    objectFit: 'cover'   // 務必保留這行，確保縮小時圖片不變形
+  }}
+        />
+      </td>
                   <td>{product.category}</td>
                   <th scope="row">{product.title}</th>
+                  {/* 新增單位欄位 */}
+      <td>{product.unit}</td>
                   <td>{product.origin_price}</td>
                   <td>{product.price}</td>
                   <td className={`${product.is_enabled && "text-success"}`}>
@@ -252,12 +373,37 @@ function App() {
                       </button>
                       <button
                         type="button"
-                        className="btn btn-outline-danger btn-sm"
+                        className="btn btn-outline-danger btn-sm" 
+                        onClick={()=>openModal("delete", product) }
                       >
                         刪除
                       </button>
+                      
                     </div>
                   </td>
+
+
+{/* 新增副圖列表 */}
+      <td>
+        <div className="d-flex flex-wrap gap-2">
+          {product.imagesUrl && product.imagesUrl.map((url, index) => (
+            url ? (
+              <img 
+                key={index}
+                src={url} 
+                style={{ width: '50px', height: '50px', objectFit: 'cover' }} 
+                className="img-thumbnail" 
+                alt={`副圖 ${index + 1}`} 
+              />
+            ) : null
+          ))}
+          {(!product.imagesUrl || product.imagesUrl.filter(url => url).length === 0) && (
+            <span className="text-muted small"></span>
+          )}
+        </div>
+      </td>
+
+
                 </tr>
               ))}
             </tbody>
@@ -268,16 +414,16 @@ function App() {
       <div
         className="modal fade"
         id="productModal"
-        tabindex="-1"
+        tabIndex="-1"
         aria-labelledby="productModalLabel"
         aria-hidden="true"
         ref={productModalRef}
       >
         <div className="modal-dialog modal-xl">
           <div className="modal-content border-0">
-            <div className="modal-header bg-dark text-white">
+            <div className={`modal-header bg-${modalType==='delete'?'danger':'dark'} text-white`}>
               <h5 id="productModalLabel" className="modal-title">
-                <span>新增產品</span>
+                <span>{modalType==='delete'?'刪除': modalType==='edit'?'編輯':'新增'}產品</span>
               </h5>
               <button
                 type="button"
@@ -287,7 +433,14 @@ function App() {
               ></button>
             </div>
             <div className="modal-body">
-              <div className="row">
+{
+  modalType==='delete' ? (
+    <p className="fs-4">
+	  確定要刪除
+	  <span className="text-danger">{templateProduct.title}</span>嗎？
+	</p>
+
+  ):(<div className="row">
                 <div className="col-sm-4">
                   <div className="mb-2">
                     <div className="mb-3">
@@ -317,7 +470,7 @@ function App() {
                     }
                   </div>
                   <div>
-                    {templateProduct.imageUrl.map((url, index) => (
+                    {templateProduct.imagesUrl.map((url, index) => (
                       <div key={index}>
                         <label htmlFor="imageUrl" className="form-label">
                           輸入圖片網址
@@ -325,7 +478,9 @@ function App() {
                         <input
                           type="text"
                           className="form-control"
-                          // placeholder={`圖片網址${index + 1}`}
+                          placeholder={`圖片網址${index + 1}`}
+                          value={url}
+                          onChange={(e)=>handleModalImageChange(index, e.target.value)}
                         />
                         {
                           //渲染圖片
@@ -339,14 +494,27 @@ function App() {
                         }
                       </div>
                     ))}
-                    <button className="btn btn-outline-primary btn-sm d-block w-100">
+
+{
+  templateProduct.imagesUrl.length < 5 && templateProduct.imageUrl[templateProduct.imagesUrl.length -1] !== "" &&
+
+<button className="btn btn-outline-primary btn-sm d-block w-100" 
+                    onClick={()=>handleAddImage()}>
                       新增圖片
                     </button>
+
+}           
                   </div>
                   <div>
-                    <button className="btn btn-outline-danger btn-sm d-block w-100">
+{
+  templateProduct.imagesUrl.length >= 1 && 
+  <button className="btn btn-outline-danger btn-sm d-block w-100" 
+                    onClick={()=>handleRemoveImage()}>
                       刪除圖片
                     </button>
+}
+
+                    
                   </div>
                 </div>
                 <div className="col-sm-8">
@@ -361,6 +529,8 @@ function App() {
                       className="form-control"
                       placeholder="請輸入標題"
                       value={templateProduct.title}
+                      onChange={(e)=>handleModalInputChange(e)}
+                      disabled ={modalType==='edit'}
                     />
                   </div>
 
@@ -375,6 +545,8 @@ function App() {
                         type="text"
                         className="form-control"
                         placeholder="請輸入分類"
+                        value={templateProduct.category}
+                        onChange={(e)=>handleModalInputChange(e)}
                       />
                     </div>
                     <div className="mb-3 col-md-6">
@@ -387,6 +559,8 @@ function App() {
                         type="text"
                         className="form-control"
                         placeholder="請輸入單位"
+                        value={templateProduct.unit}
+                        onChange={(e)=>handleModalInputChange(e)}
                       />
                     </div>
                   </div>
@@ -403,6 +577,8 @@ function App() {
                         min="0"
                         className="form-control"
                         placeholder="請輸入原價"
+                        value={templateProduct.origin_price}
+                        onChange={(e)=>handleModalInputChange(e)}
                       />
                     </div>
                     <div className="mb-3 col-md-6">
@@ -416,6 +592,8 @@ function App() {
                         min="0"
                         className="form-control"
                         placeholder="請輸入售價"
+                        value={templateProduct.price}
+                        onChange={(e)=>handleModalInputChange(e)}
                       />
                     </div>
                   </div>
@@ -430,6 +608,8 @@ function App() {
                       id="description"
                       className="form-control"
                       placeholder="請輸入產品描述"
+                      value={templateProduct.description}
+                      onChange={(e)=>handleModalInputChange(e)}
                     ></textarea>
                   </div>
                   <div className="mb-3">
@@ -441,6 +621,8 @@ function App() {
                       id="content"
                       className="form-control"
                       placeholder="請輸入說明內容"
+                      value={templateProduct.content}
+                      onChange={(e)=>handleModalInputChange(e)}
                     ></textarea>
                   </div>
                   <div className="mb-3">
@@ -450,6 +632,8 @@ function App() {
                         id="is_enabled"
                         className="form-check-input"
                         type="checkbox"
+                        checked={templateProduct.is_enabled}
+                        onChange={(e)=>handleModalInputChange(e)}
                       />
                       <label className="form-check-label" htmlFor="is_enabled">
                         是否啟用
@@ -457,10 +641,22 @@ function App() {
                     </div>
                   </div>
                 </div>
-              </div>
+              </div>)
+}
+
+              
             </div>
             <div className="modal-footer">
-              <button
+{
+  modalType==='delete' ?(<button
+    type="button"
+    className="btn btn-danger" 
+    onClick={()=>delProduct(templateProduct.id)}
+  >
+    刪除
+  </button>):(
+<> 
+<button
                 type="button"
                 className="btn btn-outline-secondary"
                 data-bs-dismiss="modal"
@@ -468,9 +664,13 @@ function App() {
               >
                 取消
               </button>
-              <button type="button" className="btn btn-primary">
+              <button type="button" className="btn btn-primary" 
+              onClick={()=>updateProduct(templateProduct.id)}>
                 確認
               </button>
+ </>
+  )
+}
             </div>
           </div>
         </div>
