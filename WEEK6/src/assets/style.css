@@ -1,0 +1,47 @@
+html,
+body {
+  height: 100%;
+  text-align: center;
+}
+
+header,
+main {
+  padding-block: 1.5em;
+
+  border-bottom: 1px solid #ccc;
+}
+
+input {
+  border: 1px solid #999;
+}
+
+input[type="number"] {
+  width: 2em !important;
+  margin-right: 1em;
+}
+
+.checkout-form {
+  background: #ccc;
+  border-radius: 25px;
+  padding: 2em;
+}
+
+.login {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 60vh;
+}
+
+.form-signin {
+  width: 100%;
+  max-width: 330px;
+  padding: 15px;
+  margin: auto;
+}
+
+img {
+  object-fit: cover;
+  max-width: 100%;
+}
