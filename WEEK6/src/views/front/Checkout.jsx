@@ -1,8 +1,10 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { currency } from "../../utils/filter";
 import { useForm } from "react-hook-form";
 import { RotatingLines } from "react-loader-spinner";
+import * as bootstrap from "bootstrap";
+import SingleProductModal from "../../components/SingleProductModal";
 
 /*
 render(<RotatingLines
@@ -21,12 +23,16 @@ wrapperClass=""
 const API_BASE = import.meta.env.VITE_API_BASE;
 const API_PATH = import.meta.env.VITE_API_PATH;
 function Checkout() {
+  const [product, setProduct] = useState({});
   const [products, setProducts] = useState([]);
   //const [cart, setCart] = useState([]);
   const [cart, setCart] = useState({ carts: [], final_total: 0 });
 
   const [loadingCartId, setLoadingCartId] = useState(null);
   const [loadingProductId, setLoadingProductId] = useState(null);
+
+  //useRef 建立對 DOM 元素的參照
+  const productModalRef = useRef(null);
 
   const {
     register,
@@ -62,6 +68,21 @@ function Checkout() {
     };
     getProducts();
     getCart();
+
+    //檢視單一商品初始化
+    productModalRef.current = new bootstrap.Modal("#productModal", {
+      keyboard: false,
+    });
+    //關閉移除焦點
+
+    //Modal 關閉時時除焦點
+    document
+      .querySelector("#productModal")
+      .addEventListener("hide.bs.modal", () => {
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
+      });
   }, []);
 
   //加入購物車
@@ -144,6 +165,12 @@ function Checkout() {
   };
 
   const onSubmit = async (formData) => {
+    // 防呆：購物車為空不能送出
+    if ((cart?.carts?.length ?? 0) === 0) {
+      alert("購物車是空的，請先加入商品再送出訂單");
+      return;
+    }
+
     console.log(formData);
     try {
       const data = {
@@ -162,6 +189,38 @@ function Checkout() {
       console.log(error.response);
     }
   };
+
+  //查看產品詳細
+  //取得單一商品資訊
+  const handleView = async (id) => {
+    //按下詳細按鈕
+    setLoadingProductId(id);
+    try {
+      const response = await axios.get(
+        `${API_BASE}/api/${API_PATH}/product/${id}`,
+      );
+      console.log(response.data.product);
+      //查看詳細後, 把資料放在PRODUCT裡
+      setProduct(response.data.product);
+    } catch (error) {
+      console.log(error.response);
+    } finally {
+      setLoadingProductId(null);
+    }
+
+    //彈出單一商品檢視MODAL
+    //使用 ref 控制 Modal
+    productModalRef.current.show();
+  };
+
+  const closeModal = () => {
+    productModalRef.current.hide();
+  };
+
+  //handleView(id);
+
+  //檢查購物車是不是有商品
+  const isCartEmpty = (cart?.carts?.length ?? 0) === 0;
 
   return (
     <div className="container">
@@ -196,9 +255,17 @@ function Checkout() {
 
               <td>
                 <div className="btn-group btn-group-sm">
-                  <button type="button" className="btn btn-outline-secondary">
-                    <i className="fas fa-spinner fa-pulse"></i>
-                    查看更多
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary"
+                    onClick={() => handleView(product.id)}
+                    disabled={loadingProductId === product.id}
+                  >
+                    {loadingProductId === product.id ? (
+                      <RotatingLines color="grey" width={80} height={24} />
+                    ) : (
+                      "查看更多"
+                    )}
                   </button>
                   <button
                     type="button"
@@ -401,12 +468,25 @@ function Checkout() {
               ></textarea>
             </div>
             <div className="text-end">
-              <button className="btn btn-danger">送出訂單</button>
+              <button className="btn btn-danger" disabled={isCartEmpty}>
+                送出訂單
+              </button>
+              {isCartEmpty && (
+                <small className="d-block text-danger mt-2">
+                  購物車為空，無法送出訂單
+                </small>
+              )}
             </div>
             {/* 結帳頁面 結束 */}
           </form>
         </div>
       </div>
+      {/* 引入單一商品檢視 */}
+      <SingleProductModal
+        product={product}
+        addCart={addCart}
+        closeModal={closeModal}
+      />
     </div>
   );
 }

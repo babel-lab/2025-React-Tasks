@@ -16,8 +16,8 @@ input {
 }
 
 input[type="number"] {
-  width: 2em !important;
-  margin-right: 1em;
+  width: 4em !important;
+  margin: 0 1em;
 }
 
 .checkout-form {
