@@ -102,6 +102,7 @@ function Checkout() {
   }, []);
 
   //加入購物車
+  /*
   const addCart = async (id, qty = 1) => {
     setSubmitHint({ type: "", text: "" });
     setLoadingCartId(id);
@@ -122,6 +123,21 @@ function Checkout() {
       const response2 = await getCart();
       console.log(response2.data.data);
       setCart(response2.data.data);
+    } catch (error) {
+      console.log(error.response);
+    } finally {
+      setLoadingCartId(null);
+    }
+  };
+*/
+
+  const addCart = async (id, qty = 1) => {
+    setSubmitHint({ type: "", text: "" }); // ✅ 加商品就清掉成功/錯誤提示
+    setLoadingCartId(id);
+    try {
+      const data = { product_id: id, qty };
+      await axios.post(`${API_BASE}/api/${API_PATH}/cart`, { data });
+      await getCart(); // ✅ 不要接 response2
     } catch (error) {
       console.log(error.response);
     } finally {
@@ -168,6 +184,12 @@ function Checkout() {
 
   //清空購物: DELETE $(API_BASE)/api/${API_PATH}/carts
   const clearCart = async () => {
+    // ✅ 空車就不要打 API
+    if ((cart?.carts?.length ?? 0) === 0) {
+      setSubmitHint({ type: "error", text: "購物車已是空的，無需清空" });
+      return;
+    }
+
     if (!window.confirm("確定要清空購物車嗎？")) return;
 
     try {
@@ -329,9 +351,15 @@ function Checkout() {
             type="button"
             className="btn btn-outline-danger"
             onClick={clearCart}
+            disabled={isCartEmpty}
           >
             清空購物車
           </button>
+          {isCartEmpty && (
+            <small className="d-block text-body-secondary mt-2">
+              購物車已是空的
+            </small>
+          )}
         </div>
         <table className="table">
           <thead>
