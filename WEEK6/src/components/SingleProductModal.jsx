@@ -1,11 +1,19 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function SingleProductModal({ product, addCart, closeModal }) {
   //購物車數量
   const [cartQty, setCartQty] = useState(1);
+
+  // ✅ 切換商品就重設
+  useEffect(() => {
+    if (!product?.id) return;
+    setCartQty(1);
+  }, [product?.id]);
+
   //
   const handleAddCart = () => {
     addCart(product.id, cartQty);
+    setCartQty(1);
     closeModal();
   };
 
@@ -20,6 +28,7 @@ function SingleProductModal({ product, addCart, closeModal }) {
               className="btn-close"
               data-bs-dismiss="modal"
               aria-label="Close"
+              onClick={closeModal} // ✅ 確保會清空 product → unmount
             ></button>
           </div>
           <div className="modal-body">
