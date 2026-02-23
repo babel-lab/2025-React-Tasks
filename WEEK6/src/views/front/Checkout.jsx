@@ -34,11 +34,27 @@ function Checkout() {
   //useRef 建立對 DOM 元素的參照
   const productModalRef = useRef(null);
 
+  const DEFAULT_FORM = {
+    email: "test@gmail.com",
+    name: "王小明",
+    tel: "0912345678",
+    address: "台北市信義區5段7號",
+    message: "",
+  };
+
   const {
     register,
     handleSubmit,
-    formState: { errors },
-  } = useForm({ mode: "onChange" });
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    mode: "onChange",
+    defaultValues: DEFAULT_FORM,
+  });
+
+  // ✅ 新增：送出訂單提示訊息
+  const [submitHint, setSubmitHint] = useState({ type: "", text: "" });
+  // type: "error" | "success" | ""
 
   const getCart = async () => {
     try {
@@ -87,6 +103,7 @@ function Checkout() {
 
   //加入購物車
   const addCart = async (id, qty = 1) => {
+    setSubmitHint({ type: "", text: "" });
     setLoadingCartId(id);
     try {
       const data = {
@@ -165,9 +182,12 @@ function Checkout() {
   };
 
   const onSubmit = async (formData) => {
+    // 每次送出前先清掉舊訊息
+    setSubmitHint({ type: "", text: "" });
+
     // 防呆：購物車為空不能送出
     if ((cart?.carts?.length ?? 0) === 0) {
-      alert("購物車是空的，請先加入商品再送出訂單");
+      setSubmitHint({ type: "error", text: "購物車為空，無法送出訂單" });
       return;
     }
 
@@ -181,12 +201,26 @@ function Checkout() {
         data,
       });
       console.log(response.data);
+      // ✅ 成功訊息（即使購物車會被清空，也要顯示這句）
+      setSubmitHint({
+        type: "success",
+        text: "訂單已送出成功！我們已收到您的訂購資訊。",
+      });
 
+      // ✅ 重新抓購物車（會變空）
+      await getCart();
+
+      // ✅ 視需要：送出後清空表單
+      reset(DEFAULT_FORM);
+
+      /*
       const response2 = await axios.get(`${API_BASE}/api/${API_PATH}/cart`);
       console.log(response2.data.data);
       setCart(response2.data.data);
+      */
     } catch (error) {
       console.log(error.response);
+      setSubmitHint({ type: "error", text: "訂單送出失敗，請稍後再試一次。" });
     }
   };
 
@@ -468,14 +502,35 @@ function Checkout() {
               ></textarea>
             </div>
             <div className="text-end">
-              <button className="btn btn-danger" disabled={isCartEmpty}>
-                送出訂單
+              <button
+                className="btn btn-danger"
+                disabled={isCartEmpty || isSubmitting}
+              >
+                {isSubmitting ? "送出中..." : "送出訂單"}
               </button>
-              {isCartEmpty && (
-                <small className="d-block text-danger mt-2">
-                  購物車為空，無法送出訂單
+
+              {/* ✅ 成功訊息 */}
+              {submitHint.type === "success" && (
+                <small className="d-block text-success mt-2">
+                  {submitHint.text}
                 </small>
               )}
+
+              {/* ✅ 錯誤訊息（例如空車） */}
+              {submitHint.type === "error" && (
+                <small className="d-block text-danger mt-2">
+                  {submitHint.text}
+                </small>
+              )}
+
+              {/* ✅ 只有在「沒有成功訊息」時才顯示空車提示 */}
+              {isCartEmpty &&
+                submitHint.type !== "success" &&
+                submitHint.type !== "error" && (
+                  <small className="d-block text-danger mt-2">
+                    購物車為空，無法送出訂單
+                  </small>
+                )}
             </div>
             {/* 結帳頁面 結束 */}
           </form>
