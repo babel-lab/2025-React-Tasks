@@ -3,6 +3,8 @@ import axios from "axios";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import { RotatingLines } from "react-loader-spinner";
+import { useDispatch } from "react-redux";
+import { setAuth } from "../slice/authSlice";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 const API_PATH = import.meta.env.VITE_API_PATH;
@@ -21,6 +23,9 @@ function Login({ getProducts, setIsAuth }) {
 
   //登入, 路由切換後到後台
   const navigate = useNavigate();
+
+  //REDUX 登入登出狀態管理
+  const dispatch = useDispatch();
 
   /* ===============================
      取得 cookie token
@@ -53,7 +58,8 @@ function Login({ getProducts, setIsAuth }) {
       );
 
       //登入仍有效
-      setIsAuth?.(true);
+      //setIsAuth?.(true);
+      dispatch(setAuth(true));
 
       //直接導去後台產品頁
       navigate("/admin/product", { replace: true });
@@ -61,7 +67,8 @@ function Login({ getProducts, setIsAuth }) {
       //token 過期或錯誤, 清除 cookie
       document.cookie =
         "hexToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      setIsAuth?.(false);
+      //setIsAuth?.(false);
+      dispatch(setAuth(false));
     }
   };
 

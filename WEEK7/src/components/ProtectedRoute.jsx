@@ -3,10 +3,17 @@ import { useEffect, useState } from "react";
 import { RotatingLines } from "react-loader-spinner";
 import { useLocation, useNavigate } from "react-router";
 
+import { useDispatch, useSelector } from "react-redux";
+import { setAuth } from "../slice/authSlice";
+
 const API_BASE = import.meta.env.VITE_API_BASE;
 
 function ProtectedRoute({ children }) {
-  const [isAuth, setIsAuth] = useState(false);
+  // ✅ Redux auth 狀態
+  const isAuth = useSelector((state) => state.auth.isAuth);
+  const dispatch = useDispatch();
+
+  // ✅ 只保留 loading 在 local state（這是 UI 狀態）
   const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
@@ -31,9 +38,10 @@ function ProtectedRoute({ children }) {
     const checkLogin = async () => {
       const token = getToken();
 
+      // 1) 沒 token：直接導 login
       if (!token) {
         clearToken();
-        setIsAuth(false);
+        dispatch(setAuth(false));
         setLoading(false);
         navigate("/login", {
           replace: true,
@@ -42,6 +50,7 @@ function ProtectedRoute({ children }) {
         return;
       }
 
+      // 2) 有 token：丟給 axios + call check
       axios.defaults.headers.common.Authorization = token;
 
       try {
@@ -50,10 +59,13 @@ function ProtectedRoute({ children }) {
           {},
           { headers: { Authorization: token } },
         );
-        setIsAuth(true);
+
+        // ✅ 驗證成功
+        dispatch(setAuth(true));
       } catch (error) {
+        // ✅ 驗證失敗：清掉 cookie + redux
         clearToken();
-        setIsAuth(false);
+        dispatch(setAuth(false));
         navigate("/login", {
           replace: true,
           state: { from: location.pathname, reason: "token_invalid" },
@@ -64,7 +76,7 @@ function ProtectedRoute({ children }) {
     };
 
     checkLogin();
-  }, [navigate, location.pathname]);
+  }, [dispatch, navigate, location.pathname]);
 
   if (loading) {
     return (
@@ -74,7 +86,9 @@ function ProtectedRoute({ children }) {
     );
   }
 
-  if (!isAuth) return null; // 已經導到 /login 了
+  // 已經導到 /login 了
+  if (!isAuth) return null;
+
   return children;
 }
 
