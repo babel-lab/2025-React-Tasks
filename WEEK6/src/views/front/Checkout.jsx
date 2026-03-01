@@ -1,8 +1,10 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { currency } from "../../utils/filter";
 import { useForm } from "react-hook-form";
 import { RotatingLines } from "react-loader-spinner";
+import * as bootstrap from "bootstrap";
+import SingleProductModal from "../../components/SingleProductModal";
 
 /*
 render(<RotatingLines
@@ -21,6 +23,7 @@ wrapperClass=""
 const API_BASE = import.meta.env.VITE_API_BASE;
 const API_PATH = import.meta.env.VITE_API_PATH;
 function Checkout() {
+  const [product, setProduct] = useState({});
   const [products, setProducts] = useState([]);
   //const [cart, setCart] = useState([]);
   const [cart, setCart] = useState({ carts: [], final_total: 0 });
@@ -28,11 +31,30 @@ function Checkout() {
   const [loadingCartId, setLoadingCartId] = useState(null);
   const [loadingProductId, setLoadingProductId] = useState(null);
 
+  //useRef 建立對 DOM 元素的參照
+  const productModalRef = useRef(null);
+
+  const DEFAULT_FORM = {
+    email: "test@gmail.com",
+    name: "王小明",
+    tel: "0912345678",
+    address: "台北市信義區5段7號",
+    message: "",
+  };
+
   const {
     register,
     handleSubmit,
-    formState: { errors },
-  } = useForm({ mode: "onChange" });
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    mode: "onChange",
+    defaultValues: DEFAULT_FORM,
+  });
+
+  // ✅ 新增：送出訂單提示訊息
+  const [submitHint, setSubmitHint] = useState({ type: "", text: "" });
+  // type: "error" | "success" | ""
 
   const getCart = async () => {
     try {
@@ -62,10 +84,27 @@ function Checkout() {
     };
     getProducts();
     getCart();
+
+    //檢視單一商品初始化
+    productModalRef.current = new bootstrap.Modal("#productModal", {
+      keyboard: false,
+    });
+    //關閉移除焦點
+
+    //Modal 關閉時時除焦點
+    document
+      .querySelector("#productModal")
+      .addEventListener("hide.bs.modal", () => {
+        if (document.activeElement instanceof HTMLElement) {
+          document.activeElement.blur();
+        }
+      });
   }, []);
 
   //加入購物車
+  /*
   const addCart = async (id, qty = 1) => {
+    setSubmitHint({ type: "", text: "" });
     setLoadingCartId(id);
     try {
       const data = {
@@ -84,6 +123,21 @@ function Checkout() {
       const response2 = await getCart();
       console.log(response2.data.data);
       setCart(response2.data.data);
+    } catch (error) {
+      console.log(error.response);
+    } finally {
+      setLoadingCartId(null);
+    }
+  };
+*/
+
+  const addCart = async (id, qty = 1) => {
+    setSubmitHint({ type: "", text: "" }); // ✅ 加商品就清掉成功/錯誤提示
+    setLoadingCartId(id);
+    try {
+      const data = { product_id: id, qty };
+      await axios.post(`${API_BASE}/api/${API_PATH}/cart`, { data });
+      await getCart(); // ✅ 不要接 response2
     } catch (error) {
       console.log(error.response);
     } finally {
@@ -130,6 +184,12 @@ function Checkout() {
 
   //清空購物: DELETE $(API_BASE)/api/${API_PATH}/carts
   const clearCart = async () => {
+    // ✅ 空車就不要打 API
+    if ((cart?.carts?.length ?? 0) === 0) {
+      setSubmitHint({ type: "error", text: "購物車已是空的，無需清空" });
+      return;
+    }
+
     if (!window.confirm("確定要清空購物車嗎？")) return;
 
     try {
@@ -144,6 +204,15 @@ function Checkout() {
   };
 
   const onSubmit = async (formData) => {
+    // 每次送出前先清掉舊訊息
+    setSubmitHint({ type: "", text: "" });
+
+    // 防呆：購物車為空不能送出
+    if ((cart?.carts?.length ?? 0) === 0) {
+      setSubmitHint({ type: "error", text: "購物車為空，無法送出訂單" });
+      return;
+    }
+
     console.log(formData);
     try {
       const data = {
@@ -154,14 +223,60 @@ function Checkout() {
         data,
       });
       console.log(response.data);
+      // ✅ 成功訊息（即使購物車會被清空，也要顯示這句）
+      setSubmitHint({
+        type: "success",
+        text: "訂單已送出成功！我們已收到您的訂購資訊。",
+      });
 
+      // ✅ 重新抓購物車（會變空）
+      await getCart();
+
+      // ✅ 視需要：送出後清空表單
+      reset(DEFAULT_FORM);
+
+      /*
       const response2 = await axios.get(`${API_BASE}/api/${API_PATH}/cart`);
       console.log(response2.data.data);
       setCart(response2.data.data);
+      */
     } catch (error) {
       console.log(error.response);
+      setSubmitHint({ type: "error", text: "訂單送出失敗，請稍後再試一次。" });
     }
   };
+
+  //查看產品詳細
+  //取得單一商品資訊
+  const handleView = async (id) => {
+    //按下詳細按鈕
+    setLoadingProductId(id);
+    try {
+      const response = await axios.get(
+        `${API_BASE}/api/${API_PATH}/product/${id}`,
+      );
+      console.log(response.data.product);
+      //查看詳細後, 把資料放在PRODUCT裡
+      setProduct(response.data.product);
+    } catch (error) {
+      console.log(error.response);
+    } finally {
+      setLoadingProductId(null);
+    }
+
+    //彈出單一商品檢視MODAL
+    //使用 ref 控制 Modal
+    productModalRef.current.show();
+  };
+
+  const closeModal = () => {
+    productModalRef.current.hide();
+  };
+
+  //handleView(id);
+
+  //檢查購物車是不是有商品
+  const isCartEmpty = (cart?.carts?.length ?? 0) === 0;
 
   return (
     <div className="container">
@@ -196,9 +311,17 @@ function Checkout() {
 
               <td>
                 <div className="btn-group btn-group-sm">
-                  <button type="button" className="btn btn-outline-secondary">
-                    <i className="fas fa-spinner fa-pulse"></i>
-                    查看更多
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary"
+                    onClick={() => handleView(product.id)}
+                    disabled={loadingProductId === product.id}
+                  >
+                    {loadingProductId === product.id ? (
+                      <RotatingLines color="grey" width={80} height={24} />
+                    ) : (
+                      "查看更多"
+                    )}
                   </button>
                   <button
                     type="button"
@@ -228,9 +351,15 @@ function Checkout() {
             type="button"
             className="btn btn-outline-danger"
             onClick={clearCart}
+            disabled={isCartEmpty}
           >
             清空購物車
           </button>
+          {isCartEmpty && (
+            <small className="d-block text-body-secondary mt-2">
+              購物車已是空的
+            </small>
+          )}
         </div>
         <table className="table">
           <thead>
@@ -401,12 +530,46 @@ function Checkout() {
               ></textarea>
             </div>
             <div className="text-end">
-              <button className="btn btn-danger">送出訂單</button>
+              <button
+                className="btn btn-danger"
+                disabled={isCartEmpty || isSubmitting}
+              >
+                {isSubmitting ? "送出中..." : "送出訂單"}
+              </button>
+
+              {/* ✅ 成功訊息 */}
+              {submitHint.type === "success" && (
+                <small className="d-block text-success mt-2">
+                  {submitHint.text}
+                </small>
+              )}
+
+              {/* ✅ 錯誤訊息（例如空車） */}
+              {submitHint.type === "error" && (
+                <small className="d-block text-danger mt-2">
+                  {submitHint.text}
+                </small>
+              )}
+
+              {/* ✅ 只有在「沒有成功訊息」時才顯示空車提示 */}
+              {isCartEmpty &&
+                submitHint.type !== "success" &&
+                submitHint.type !== "error" && (
+                  <small className="d-block text-danger mt-2">
+                    購物車為空，無法送出訂單
+                  </small>
+                )}
             </div>
             {/* 結帳頁面 結束 */}
           </form>
         </div>
       </div>
+      {/* 引入單一商品檢視 */}
+      <SingleProductModal
+        product={product}
+        addCart={addCart}
+        closeModal={closeModal}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import axios from "axios";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { currency } from "../../utils/filter";
+import { RotatingLines } from "react-loader-spinner";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 const API_PATH = import.meta.env.VITE_API_PATH;
@@ -119,7 +120,10 @@ navigate(`/product/${id}`,{state:{productData: response.data.product}});
       </div>
       {loading && (
         <div className="row">
-          <h3 className="text-body-secondary">載入中...</h3>
+          <div className="d-flex flex-column align-items-center py-4">
+            <RotatingLines color="grey" width={80} height={48} />
+            <div className="text-body-secondary mt-2">載入中...</div>
+          </div>
         </div>
       )}
       <div className="row">

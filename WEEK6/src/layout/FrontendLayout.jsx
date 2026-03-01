@@ -31,7 +31,7 @@ function FrontendLayout() {
           </li>
           <li className="nav-item">
             <NavLink className={handleActive} to="/login">
-              (後台)登入
+              登入(後台)
             </NavLink>
           </li>
         </ul>

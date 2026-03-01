@@ -4,8 +4,17 @@ import { currency } from "../../utils/filter";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 const API_PATH = import.meta.env.VITE_API_PATH;
+
 function Cart() {
-  const [cart, setCart] = useState([]);
+  // ✅ API 回傳的是物件 { carts: [], final_total: ... }
+  const [cart, setCart] = useState({ carts: [], final_total: 0 });
+
+  // ✅ clearCart 有用到
+  const [submitHint, setSubmitHint] = useState(null);
+
+  // ✅ JSX 有用到，但原本沒宣告
+  const isCartEmpty = (cart?.carts?.length ?? 0) === 0;
+
   //打API
   //取得購物車列表 GET ${API_BASE}/api/${API_PATH}/cart
   useEffect(() => {
@@ -25,6 +34,9 @@ function Cart() {
   //更新商品數量: PUT ${API_BASE)/api/${API_PATH}/cart/${cartId}
   const updateCart = async (cartId, productId, qty = 1) => {
     try {
+      // 防呆：數量不能小於 0
+      if (qty < 0) qty = 0;
+
       const data = { product_id: productId, qty };
       const response = await axios.put(
         `${API_BASE}/api/${API_PATH}/cart/${cartId}`,
@@ -58,8 +70,14 @@ function Cart() {
     }
   };
 
-  //清空購物: DELETE $(API_BASE)/api/${API_PATH}/carts
+  //清空購物: DELETE ${API_BASE}/api/${API_PATH}/carts
   const clearCart = async () => {
+    // ✅ 空車就不要打 API
+    if (isCartEmpty) {
+      setSubmitHint({ type: "error", text: "購物車已是空的，無需清空" });
+      return;
+    }
+
     if (!window.confirm("確定要清空購物車嗎？")) return;
 
     try {
@@ -68,8 +86,11 @@ function Cart() {
 
       const response2 = await axios.get(`${API_BASE}/api/${API_PATH}/cart`);
       setCart(response2.data.data);
+
+      setSubmitHint({ type: "success", text: "已清空購物車" });
     } catch (error) {
       console.log(error.response);
+      setSubmitHint({ type: "error", text: "清空失敗，請稍後再試" });
     }
   };
 
@@ -78,16 +99,35 @@ function Cart() {
       <div className="row">
         <h2>購物車列表</h2>
       </div>
+
       <div className="row">
         <div className="text-end mt-4">
           <button
             type="button"
             className="btn btn-outline-danger"
             onClick={clearCart}
+            disabled={isCartEmpty}
           >
             清空購物車
           </button>
+
+          {isCartEmpty && (
+            <small className="d-block text-body-secondary mt-2">
+              購物車已是空的
+            </small>
+          )}
+
+          {submitHint && (
+            <small
+              className={`d-block mt-2 ${
+                submitHint.type === "success" ? "text-success" : "text-danger"
+              }`}
+            >
+              {submitHint.text}
+            </small>
+          )}
         </div>
+
         <table className="table">
           <thead>
             <tr>
@@ -97,6 +137,7 @@ function Cart() {
               <th scope="col">小計</th>
             </tr>
           </thead>
+
           <tbody>
             {(cart?.carts ?? []).map((cartItem) => (
               <tr key={cartItem.id}>
@@ -118,6 +159,7 @@ function Cart() {
                       aria-label="sizing example input"
                       aria-describedby="inputGroup-sizing-sm"
                       defaultValue={cartItem.qty}
+                      min="0"
                       onChange={(e) =>
                         updateCart(
                           cartItem.id,
@@ -135,6 +177,7 @@ function Cart() {
               </tr>
             ))}
           </tbody>
+
           <tfoot>
             <tr>
               <td className="text-end" colSpan="3">
@@ -148,4 +191,5 @@ function Cart() {
     </div>
   );
 }
+
 export default Cart;
