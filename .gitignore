@@ -1,0 +1,8 @@
+# Ignore WEEK1 entirely
+WEEK1/
+
+# Ignore env file in WEEK2
+WEEK2/.env
+
+# General env ignore (safety)
+.env
