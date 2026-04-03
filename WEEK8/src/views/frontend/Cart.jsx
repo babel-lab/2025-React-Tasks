@@ -211,6 +211,8 @@ function Cart() {
                   NT$ {currency(total)}
                 </td>
               </tr>
+              {/* 
+              
               <tr>
                 <th
                   scope="row"
@@ -222,6 +224,8 @@ function Cart() {
                   NT$ {currency(final_total)}
                 </td>
               </tr>
+              
+              */}
             </tbody>
           </table>
 

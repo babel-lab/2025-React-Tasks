@@ -1,8 +1,10 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { useDispatch } from "react-redux";
 import { currency } from "../../utilits/filter";
 import Pagination from "../../components/Pagination";
 import { useNavigate } from "react-router";
+import { createAsyncAddCart } from "../../slice/cartSlice";
 
 const API_BASE = import.meta.env.VITE_API_BASE;
 const API_PATH = import.meta.env.VITE_API_PATH;
@@ -14,6 +16,8 @@ const Products = () => {
   const [categories, setCategories] = useState([]);
   // 目前分類
   const [currentCategory, setCurrentCategory] = useState("all");
+
+  const dispatch = useDispatch();
 
   // 用 REACT ROUTER 來做切換
   const navigate = useNavigate();
@@ -32,7 +36,7 @@ const Products = () => {
       const response = await axios.get(`${API_BASE}/api/${API_PATH}/products/all`);
       const result = [
         "all",
-        ...new Set(response.data.products.map((p) => p.category)),
+        ...new Set((response.data.products || []).map((p) => p.category)),
       ];
       setCategories(result);
     } catch (error) {
@@ -50,8 +54,15 @@ const Products = () => {
         },
       });
 
-      setProducts(response.data.products);
-      setPagination(response.data.pagination);
+      setProducts(response.data.products || []);
+      setPagination(
+        response.data.pagination || {
+          current_page: 1,
+          has_pre: false,
+          has_next: false,
+          total_pages: 1,
+        },
+      );
     } catch (error) {
       console.log(error.response || error);
     }
@@ -61,6 +72,16 @@ const Products = () => {
   const handleViewDetail = (e, id) => {
     e.preventDefault();
     navigate(`/product/${id}`);
+  };
+
+  // 加入購物車
+  const handleAddCart = (product_id, qty = 1) => {
+    dispatch(
+      createAsyncAddCart({
+        product_id,
+        qty,
+      }),
+    );
   };
 
   // 初次載入抓分類
@@ -146,11 +167,30 @@ const Products = () => {
           color: #6c757d;
           margin-bottom: 8px;
           word-break: break-word;
+          line-height: 1.7;
         }
 
         .products-price {
           color: #6c757d;
+          margin-bottom: 4px;
+        }
+
+        .products-category-text {
+          color: #6c757d;
           margin-bottom: 0;
+          word-break: break-word;
+        }
+
+        .products-btn-wrap {
+          display: flex;
+          gap: 8px;
+          width: 100%;
+          margin-top: 16px;
+        }
+
+        .products-btn {
+          flex: 1;
+          min-width: 0;
         }
 
         @media (min-width: 768px) {
@@ -199,8 +239,8 @@ const Products = () => {
                     alt={product.title}
                   />
 
-                  <div className="card-body p-0">
-                    <h4 className="mt-3 mb-1">
+                  <div className="card-body p-0 d-flex flex-column h-100">
+                    <h4 className="mt-3 mb-1" style={{ wordBreak: "break-word" }}>
                       <a
                         href="#"
                         onClick={(e) => handleViewDetail(e, product.id)}
@@ -215,6 +255,28 @@ const Products = () => {
                     <p className="products-price">
                       NT$ {currency(product.price)}
                     </p>
+
+                    <p className="products-category-text small">
+                      商品分類：{product.category}
+                    </p>
+
+                    <div className="products-btn-wrap mt-auto">
+                      <button
+                        type="button"
+                        className="btn btn-outline-dark rounded-0 products-btn"
+                        onClick={(e) => handleViewDetail(e, product.id)}
+                      >
+                        查看蛋糕
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn btn-dark rounded-0 products-btn"
+                        onClick={() => handleAddCart(product.id, 1)}
+                      >
+                        加入購物車
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

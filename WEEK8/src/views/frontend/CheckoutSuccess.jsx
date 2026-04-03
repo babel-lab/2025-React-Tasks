@@ -109,7 +109,7 @@ if (!order) {
                     </div>
 
                     <p className="text-end mb-0">
-                      {currency(item.final_total)}
+                      NT$ {currency(item.final_total)}
                     </p>
                   </div>
                 </div>
@@ -119,7 +119,7 @@ if (!order) {
 
               <div className="d-flex justify-content-between">
                 <h5>Total</h5>
-                <h5>{currency(order.total)}</h5>
+                <h5>NT$ {currency(order.total)}</h5>
               </div>
             </div>
           </div>

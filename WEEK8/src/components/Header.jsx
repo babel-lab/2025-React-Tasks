@@ -35,11 +35,30 @@ function Header() {
           {/* 左邊：桌機版選單 */}
           <div className="d-none d-lg-flex align-items-center">
             <ul className="navbar-nav flex-row">
+              
               <li className="nav-item">
                 <Link className="nav-link ps-0 pe-3" to="/product">
                   產品列表
                 </Link>
               </li>
+              <li className="nav-item">
+  <Link
+    className="nav-link  ps-0 pe-3"
+    to="/about"
+    onClick={handleCloseMenu}
+  >
+    關於我們
+  </Link>
+</li>
+<li className="nav-item">
+  <Link
+    className="nav-link  ps-0 pe-3"
+    to="/faq"
+    onClick={handleCloseMenu}
+  >
+    常見問題
+  </Link>
+</li>
             </ul>
           </div>
 
@@ -109,6 +128,24 @@ function Header() {
                 產品列表
               </Link>
             </li>
+            <li className="nav-item">
+  <Link
+    className="nav-link px-0"
+    to="/about"
+    onClick={handleCloseMenu}
+  >
+    關於我們
+  </Link>
+</li>
+<li className="nav-item">
+  <Link
+    className="nav-link px-0"
+    to="/faq"
+    onClick={handleCloseMenu}
+  >
+    常見問題
+  </Link>
+</li>
 
             {/* 小版購物車連結
             <li className="nav-item">
