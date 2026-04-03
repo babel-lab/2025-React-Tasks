@@ -23,6 +23,8 @@ function SingleProduct() {
 
   //按鈕送出加入購物車
   const handleAddToCart = () => {
+    if (!product.id) return;
+
     dispatch(
       createAsyncAddCart({
         product_id: product.id,
@@ -38,10 +40,9 @@ function SingleProduct() {
     const getProduct = async () => {
       try {
         const response = await axios.get(
-          `${API_BASE}/api/${API_PATH}/product/${id}`
+          `${API_BASE}/api/${API_PATH}/product/${id}`,
         );
-        //console.log(response.data.product);
-        setProduct(response.data.product);
+        setProduct(response.data.product || {});
       } catch (error) {
         console.log(error.response || error);
       }
@@ -61,10 +62,11 @@ function SingleProduct() {
         style={{
           minHeight: "400px",
           width: "100%",
-          backgroundImage: `url(${product.imageUrl})`,
+          backgroundImage: product.imageUrl ? `url(${product.imageUrl})` : "none",
           backgroundPosition: "center center",
           backgroundSize: "cover",
           backgroundRepeat: "no-repeat",
+          backgroundColor: "#f8f9fa",
         }}
       ></div>
 
@@ -106,20 +108,22 @@ function SingleProduct() {
               gap: "12px",
             }}
           >
-            {product.imagesUrl?.map((image, index) => (
-              <img
-                key={`${product.id}-${index}`}
-                src={image}
-                alt=""
-                style={{
-                  width: "100%",
-                  maxWidth: "240px",
-                  flex: "1 1 180px",
-                  objectFit: "cover",
-                  display: "block",
-                }}
-              />
-            ))}
+            {product.imagesUrl
+              ?.filter((image) => image)
+              .map((image, index) => (
+                <img
+                  key={`${product.id}-${index}`}
+                  src={image}
+                  alt={product.title || "商品圖片"}
+                  style={{
+                    width: "100%",
+                    maxWidth: "240px",
+                    flex: "1 1 180px",
+                    objectFit: "cover",
+                    display: "block",
+                  }}
+                />
+              ))}
           </div>
 
           <div className="border border-bottom border-top-0 border-start-0 border-end-0 mb-3">
@@ -215,14 +219,17 @@ function SingleProduct() {
             </div>
 
             <input
-              type="text"
+              type="number"
               className="form-control border-0 text-center my-auto shadow-none"
               placeholder=""
               aria-label="qty"
               aria-describedby="button-addon1"
               value={qty}
               min="1"
-              onChange={(e) => setQty(Number(e.target.value) || 1)}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                setQty(Number.isNaN(value) || value < 1 ? 1 : value);
+              }}
             />
 
             <div className="input-group-append">
