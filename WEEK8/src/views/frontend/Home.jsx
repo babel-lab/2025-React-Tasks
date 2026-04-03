@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router";
 import { currency } from "../../utilits/filter";
@@ -42,18 +42,22 @@ function Home() {
   ];
 
   // 取得商品資料
-  const getProducts = async () => {
+  const getProducts = useCallback(async () => {
     try {
       const response = await axios.get(`${API_BASE}/api/${API_PATH}/products`);
       setProducts(response.data.products || []);
     } catch (error) {
       console.log(error.response || error);
     }
+  }, []);
+
+useEffect(() => {
+  const fetchProducts = async () => {
+    await getProducts();
   };
 
-  useEffect(() => {
-    getProducts();
-  }, []);
+  fetchProducts();
+}, [getProducts]);
 
   // 搜尋後的商品篩選
   const filterProducts = useMemo(() => {
@@ -171,10 +175,7 @@ function Home() {
         <div className="row mt-4 g-4">
           {filterProducts.length > 0 ? (
             filterProducts.map((product) => (
-              <div
-                key={product.id}
-                className="col-12 col-md-6 col-lg-4"
-              >
+              <div key={product.id} className="col-12 col-md-6 col-lg-4">
                 <div className="card border-0 h-100 position-relative">
                   <img
                     src={product.imageUrl}
@@ -189,7 +190,10 @@ function Home() {
                   />
 
                   <div className="card-body p-0 d-flex flex-column">
-                    <h4 className="mb-0 mt-4" style={{ wordBreak: "break-word" }}>
+                    <h4
+                      className="mb-0 mt-4"
+                      style={{ wordBreak: "break-word" }}
+                    >
                       {product.title}
                     </h4>
 

@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useDispatch, useSelector } from "react-redux";
 import { currency } from "../../utilits/filter";
@@ -26,13 +26,13 @@ function Checkout() {
   });
 
   // 取得購物車
-  const getCart = async () => {
-    dispatch(createAsyncGetCart());
-  };
+const getCart = useCallback(async () => {
+  dispatch(createAsyncGetCart());
+}, [dispatch]);
 
-  useEffect(() => {
-    getCart();
-  }, [dispatch]);
+useEffect(() => {
+  getCart();
+}, [getCart]);
 
   // 送出訂單
   const onSubmit = async (data) => {

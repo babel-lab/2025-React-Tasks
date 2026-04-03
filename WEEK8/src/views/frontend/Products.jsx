@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
 import { currency } from "../../utilits/filter";
 import Pagination from "../../components/Pagination";
@@ -31,7 +31,7 @@ const Products = () => {
   });
 
   // 取得全部商品，拿來整理分類
-  const getAllProducts = async () => {
+  const getAllProducts = useCallback(async () => {
     try {
       const response = await axios.get(`${API_BASE}/api/${API_PATH}/products/all`);
       const result = [
@@ -42,10 +42,10 @@ const Products = () => {
     } catch (error) {
       console.log(error.response || error);
     }
-  };
+  }, []);
 
   // 取得商品列表
-  const getProducts = async (page = 1, category = "all") => {
+  const getProducts = useCallback(async (page = 1, category = "all") => {
     try {
       const response = await axios.get(`${API_BASE}/api/${API_PATH}/products`, {
         params: {
@@ -66,7 +66,7 @@ const Products = () => {
     } catch (error) {
       console.log(error.response || error);
     }
-  };
+  }, []);
 
   // 商品詳細頁
   const handleViewDetail = (e, id) => {
@@ -86,13 +86,21 @@ const Products = () => {
 
   // 初次載入抓分類
   useEffect(() => {
-    getAllProducts();
-  }, []);
+    const fetchAllProducts = async () => {
+      await getAllProducts();
+    };
+
+    fetchAllProducts();
+  }, [getAllProducts]);
 
   // 切換分類時，自動回第 1 頁
   useEffect(() => {
-    getProducts(1, currentCategory);
-  }, [currentCategory]);
+    const fetchProductsByCategory = async () => {
+      await getProducts(1, currentCategory);
+    };
+
+    fetchProductsByCategory();
+  }, [getProducts, currentCategory]);
 
   return (
     <>

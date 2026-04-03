@@ -93,112 +93,139 @@ function Cart() {
 
           {
             //渲染購物車內容
-            carts.map((cartItem) => (
-              <div
-                className="d-flex flex-column flex-md-row mt-4 bg-light overflow-hidden"
-                key={cartItem.id}
-              >
-                <img
-                  src={cartItem.product.imageUrl}
-                  alt={cartItem.product.title}
-                  style={{
-                    width: "100%",
-                    maxWidth: "100%",
-                    height: "220px",
-                    objectFit: "cover",
-                    flexShrink: 0,
-                  }}
-                  className="d-block d-md-none"
-                />
+            carts.map((cartItem) => {
+              const unitPrice =
+                cartItem.product.price || cartItem.product.origin_price || 0;
+              const itemTotal = cartItem.final_total || cartItem.total || 0;
 
-                <img
-                  src={cartItem.product.imageUrl}
-                  alt={cartItem.product.title}
-                  style={{
-                    width: "120px",
-                    height: "120px",
-                    objectFit: "cover",
-                    flexShrink: 0,
-                  }}
-                  className="d-none d-md-block"
-                />
-
+              return (
                 <div
-                  className="d-flex flex-column flex-grow-1 position-relative"
-                  style={{
-                    padding: "16px",
-                    minWidth: 0,
-                  }}
+                  className="d-flex flex-column flex-md-row mt-4 bg-light overflow-hidden"
+                  key={cartItem.id}
                 >
-                  <a
-                    href="#"
-                    className="position-absolute text-dark"
+                  <img
+                    src={cartItem.product.imageUrl}
+                    alt={cartItem.product.title}
                     style={{
-                      top: "16px",
-                      right: "16px",
+                      width: "100%",
+                      maxWidth: "100%",
+                      height: "220px",
+                      objectFit: "cover",
+                      flexShrink: 0,
                     }}
-                    onClick={(e) => handleRemoveCart(e, cartItem.id)}
-                  >
-                    <i className="fas fa-times"></i>
-                  </a>
+                    className="d-block d-md-none"
+                  />
 
-                  <p className="mb-1 fw-bold pe-4">{cartItem.product.title}</p>
-                  <p
-                    className="mb-3 text-muted"
+                  <img
+                    src={cartItem.product.imageUrl}
+                    alt={cartItem.product.title}
                     style={{
-                      fontSize: "14px",
-                      wordBreak: "break-word",
+                      width: "120px",
+                      height: "120px",
+                      objectFit: "cover",
+                      flexShrink: 0,
+                    }}
+                    className="d-none d-md-block"
+                  />
+
+                  <div
+                    className="d-flex flex-column flex-grow-1 position-relative"
+                    style={{
+                      padding: "16px",
+                      minWidth: 0,
                     }}
                   >
-                    {cartItem.product.description}
-                  </p>
-
-                  <div className="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-3 w-100">
-                    <div
-                      className="d-flex align-items-center justify-content-between"
+                    <a
+                      href="#"
+                      className="position-absolute text-dark"
                       style={{
-                        width: "100%",
-                        maxWidth: "220px",
-                        border: "1px solid #dee2e6",
-                        backgroundColor: "#fff",
-                        padding: "8px 12px",
-                        flexShrink: 0,
+                        top: "16px",
+                        right: "16px",
+                      }}
+                      onClick={(e) => handleRemoveCart(e, cartItem.id)}
+                    >
+                      <i className="fas fa-times"></i>
+                    </a>
+
+                    <p className="mb-1 fw-bold pe-4">{cartItem.product.title}</p>
+                    <p
+                      className="mb-2 text-muted"
+                      style={{
+                        fontSize: "14px",
+                        wordBreak: "break-word",
                       }}
                     >
-                      <a
-                        href="#"
-                        className="text-dark text-decoration-none"
-                        onClick={(e) => handleUpdateCartQty(e, cartItem, "minus")}
-                      >
-                        <i className="fas fa-minus"></i>
-                      </a>
-
-                      <input
-                        type="text"
-                        className="form-control border-0 text-center shadow-none bg-transparent px-0"
-                        value={cartItem.qty}
-                        readOnly
-                        style={{
-                          maxWidth: "60px",
-                        }}
-                      />
-
-                      <a
-                        href="#"
-                        className="text-dark text-decoration-none"
-                        onClick={(e) => handleUpdateCartQty(e, cartItem, "plus")}
-                      >
-                        <i className="fas fa-plus"></i>
-                      </a>
-                    </div>
-
-                    <p className="mb-0 ms-sm-auto fw-bold text-sm-end">
-                      NT$ {currency(cartItem.final_total || cartItem.total)}
+                      {cartItem.product.description}
                     </p>
+
+                    <p
+                      className="mb-3 text-muted"
+                      style={{
+                        fontSize: "14px",
+                      }}
+                    >
+                      單價 NT$ {currency(unitPrice)} { /* × {cartItem.qty} */}
+                    </p>
+
+                    <div className="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-3 w-100">
+                      <div
+                        className="d-flex align-items-center justify-content-between"
+                        style={{
+                          width: "100%",
+                          maxWidth: "220px",
+                          border: "1px solid #dee2e6",
+                          backgroundColor: "#fff",
+                          padding: "8px 12px",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <a
+                          href="#"
+                          className="text-dark text-decoration-none"
+                          onClick={(e) =>
+                            handleUpdateCartQty(e, cartItem, "minus")
+                          }
+                        >
+                          <i className="fas fa-minus"></i>
+                        </a>
+
+                        <input
+                          type="text"
+                          className="form-control border-0 text-center shadow-none bg-transparent px-0"
+                          value={cartItem.qty}
+                          readOnly
+                          style={{
+                            maxWidth: "60px",
+                          }}
+                        />
+
+                        <a
+                          href="#"
+                          className="text-dark text-decoration-none"
+                          onClick={(e) =>
+                            handleUpdateCartQty(e, cartItem, "plus")
+                          }
+                        >
+                          <i className="fas fa-plus"></i>
+                        </a>
+                      </div>
+
+                      <div className="ms-sm-auto text-sm-end">
+                        <p
+                          className="mb-1 text-muted"
+                          style={{ fontSize: "14px" }}
+                        >
+                          小計
+                        </p>
+                        <p className="mb-0 fw-bold">
+                          NT$ {currency(itemTotal)}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           }
 
           <table className="table mt-4 text-muted" style={{ tableLayout: "fixed" }}>

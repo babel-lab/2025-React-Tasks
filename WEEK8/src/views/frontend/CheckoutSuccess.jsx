@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { currency } from "../../utilits/filter";
 
@@ -11,22 +11,26 @@ function CheckoutSuccess() {
   const [order, setOrder] = useState(null);
 
   // 取得訂單
-  const getOrder = async () => {
-    try {
-      const res = await axios.get(
-        `${API_BASE}/api/${API_PATH}/order/${id}`
-      );
-      setOrder(res.data.order);
-    } catch (err) {
-      console.log(err);
-    }
+  const getOrder = useCallback(async () => {
+  try {
+    const res = await axios.get(
+      `${API_BASE}/api/${API_PATH}/order/${id}`,
+    );
+    setOrder(res.data.order);
+  } catch (err) {
+    console.log(err);
+  }
+}, [id]);
+
+useEffect(() => {
+  if (!id) return;
+
+  const fetchOrder = async () => {
+    await getOrder();
   };
 
-  useEffect(() => {
-    if (id) {
-      getOrder();
-    }
-  }, [id]);
+  fetchOrder();
+}, [id, getOrder]);
 
   if (!id) {
   return <div className="container py-5">找不到訂單編號</div>;

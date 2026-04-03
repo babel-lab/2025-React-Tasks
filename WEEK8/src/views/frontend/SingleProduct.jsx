@@ -40,7 +40,7 @@ function SingleProduct() {
         const response = await axios.get(
           `${API_BASE}/api/${API_PATH}/product/${id}`
         );
-        console.log(response.data.product);
+        //console.log(response.data.product);
         setProduct(response.data.product);
       } catch (error) {
         console.log(error.response || error);

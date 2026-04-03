@@ -31,7 +31,6 @@ export const createAsyncGetCart = createAsyncThunk(
   async (_, { dispatch }) => {
     try {
       const response = await axios.get(`${API_BASE}/api/${API_PATH}/cart`);
-      //console.log(response.data.data);
 
       //使用dispatch去call action裡的slice
       dispatch(updateCart(response.data.data));
@@ -59,11 +58,9 @@ export const createAsyncAddCart = createAsyncThunk(
   "cart/createAsyncAddCart",
   async (data, { dispatch }) => {
     try {
-      const response = await axios.post(`${API_BASE}/api/${API_PATH}/cart`, {
+      await axios.post(`${API_BASE}/api/${API_PATH}/cart`, {
         data,
       });
-
-      //console.log(response.data);
 
       dispatch(
         createMessage({
@@ -91,11 +88,7 @@ export const createAsyncDelCart = createAsyncThunk(
   "cart/createAsyncDelCart",
   async (id, { dispatch }) => {
     try {
-      const response = await axios.delete(
-        `${API_BASE}/api/${API_PATH}/cart/${id}`,
-      );
-
-      //console.log(response.data);
+      await axios.delete(`${API_BASE}/api/${API_PATH}/cart/${id}`);
 
       dispatch(
         createMessage({
@@ -123,9 +116,7 @@ export const createAsyncClearCart = createAsyncThunk(
   "cart/createAsyncClearCart",
   async (_, { dispatch }) => {
     try {
-      const response = await axios.delete(`${API_BASE}/api/${API_PATH}/carts`);
-
-      //console.log(response.data);
+      await axios.delete(`${API_BASE}/api/${API_PATH}/carts`);
 
       dispatch(
         createMessage({
@@ -158,14 +149,9 @@ export const createAsyncUpdateCart = createAsyncThunk(
         qty,
       };
 
-      const response = await axios.put(
-        `${API_BASE}/api/${API_PATH}/cart/${cartId}`,
-        {
-          data,
-        },
-      );
-
-      //console.log(response.data);
+      await axios.put(`${API_BASE}/api/${API_PATH}/cart/${cartId}`, {
+        data,
+      });
 
       dispatch(
         createMessage({
